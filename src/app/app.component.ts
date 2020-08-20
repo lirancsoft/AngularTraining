@@ -59,20 +59,19 @@ export class AppComponent implements OnInit {
 
   ngOnInit(): void {
     class Cart {
-      productsInCart: Record<string, number>;
-      totalPrice: number;
+      private productsInCart: Record<string, number>;
 
       constructor() {
         this.productsInCart = {};
-        this.totalPrice = 0;
       }
 
-      getProductFromStock(productName: string, stock: Product[]): Product {
-        return stock.filter(product => product.name === productName)[0];
+      private getProductFromStock(productName: string, stock: Product[]): Product {
+        return stock.find(product => product.name === productName);
       }
 
       addProduct(productName: string, stock: Product[]): void {
-        if (!this.getProductFromStock(productName, stock)) {
+        const productFromStock: Product = this.getProductFromStock(productName, stock);
+        if (!productFromStock) {
           console.log('Product ' + productName + ' doesn\'t exist in stock.');
           return;
         }
@@ -80,57 +79,42 @@ export class AppComponent implements OnInit {
           console.log('Product ' + productName + ' already exists in your cart.');
           return;
         }
-        this.productsInCart[productName] = 1;
-        console.log('The new product ' + productName + ' added to your cart successfully.');
-        this.calcTotalPrice(stock);
+        if (productFromStock.hasOwnProperty('limit') && productFromStock.limit > 0) {
+          this.productsInCart[productName] = 1;
+          console.log('The new product ' + productName + ' added to your cart successfully.');
+        } else {
+          console.log('Product ' + productName + ' is not available is out of stock.');
+        }
       }
 
-      removeProduct(productName: string, stock: Product[]): void {
+      removeProduct(productName: string): void {
         if (this.productsInCart[productName]) {
           delete this.productsInCart[productName];
           console.log('Product ' + productName + ' removed successfully.');
-          this.calcTotalPrice(stock);
         } else {
           console.log('Product ' + productName + ' doesn\'t exist in your cart.');
         }
       }
 
-      updateProductsAmount(stock: Product[]): void {
-        for (const k of Object.keys(this.productsInCart)) {
-          const product = this.getProductFromStock(k, stock);
-          if (product.hasOwnProperty('limit')) {
-            product.limit -= this.productsInCart[k];
+      private updateProductsAmount(stock: Product[]): void {
+        Object.keys(this.productsInCart).forEach((productName: string) => {
+          const product = this.getProductFromStock(productName, stock);
+          if (product.hasOwnProperty('limit') && (product.limit - this.productsInCart[productName] > 0)) {
+            product.limit -= this.productsInCart[productName];
           }
-        }
+        });
       }
 
       checkout(stock: Product[]): void {
-        if (this.checkAvailabilityOfAllProductsInCart(stock)) {
-          this.updateProductsAmount(stock);
-          console.log('Checked out with a total cost of: ₪' + this.totalPrice);
-          this.productsInCart = {};
-          this.totalPrice = 0;
-        }
+        this.updateProductsAmount(stock);
+        console.log('Checked out with a total cost of: ₪' + this.calcTotalPrice(stock));
+        this.productsInCart = {};
       }
 
-      calcTotalPrice(stock: Product[]): void {
-        let sum = 0;
-        for (const k of Object.keys(this.productsInCart)) {
-          const product = this.getProductFromStock(k, stock);
-          sum += product.price;
-        }
-        this.totalPrice = sum;
-      }
-
-      checkAvailabilityOfAllProductsInCart(stock: Product[]): boolean {
-        for (const k of Object.keys(this.productsInCart)) {
-          const product = this.getProductFromStock(k, stock);
-          if (product.hasOwnProperty('limit') && (product.limit - this.productsInCart[k] < 0)) {
-            console.log('Product ' + k + 'is out of stock. Only ' + product.limit + ' units available.');
-            return false;
-          }
-        }
-        return true;
+      calcTotalPrice(stock: Product[]): number {
+        return Object.keys(this.productsInCart).reduce((acc, productName): number => {
+          return acc + this.productsInCart[productName] * this.getProductFromStock(productName, stock).price;
+        }, 0);
       }
     }
 
@@ -139,18 +123,23 @@ export class AppComponent implements OnInit {
     console.log(JSON.stringify(cart));
     cart.addProduct('Explorer', this.stock);
     console.log(JSON.stringify(cart));
+    console.log('price: ' + cart.calcTotalPrice(this.stock));
     cart.addProduct('Firefox', this.stock);
     console.log(JSON.stringify(cart));
+    console.log('price: ' + cart.calcTotalPrice(this.stock));
     cart.addProduct('Firefox', this.stock);
     console.log(JSON.stringify(cart));
     cart.addProduct('Ferrari', this.stock);
     console.log(JSON.stringify(cart));
-    cart.removeProduct('Explorer', this.stock);
+    console.log('price: ' + cart.calcTotalPrice(this.stock));
+    cart.removeProduct('Explorer');
     console.log(JSON.stringify(cart));
-    cart.removeProduct('Firefox', this.stock);
+    cart.removeProduct('Firefox');
     console.log(JSON.stringify(cart));
+    console.log('price: ' + cart.calcTotalPrice(this.stock));
     cart.checkout(this.stock);
     console.log(JSON.stringify(cart));
+    console.log('price: ' + cart.calcTotalPrice(this.stock));
     console.log(JSON.stringify(this.stock));
   }
 }
