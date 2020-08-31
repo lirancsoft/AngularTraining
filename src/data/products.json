@@ -1,0 +1,41 @@
+[
+  {
+    "name": "Firefox",
+    "description": "Your web, the way you like it.",
+    "price": 777.00,
+    "image": "../img/firefox_logo.png",
+    "limit": 30
+  },
+  {
+    "name": "Asus",
+    "description": "In Search of Incredible.",
+    "price": 1500.00,
+    "image": "../img/asus_logo.png"
+  },
+  {
+    "name": "Ferrari",
+    "description": "We are the competition. You are the fuel.",
+    "price": 1000000.00,
+    "image": "../img/ferrari_logo.png",
+    "limit": 5
+  },
+  {
+    "name": "Intel",
+    "description": "Look inside.",
+    "price": 1999.00,
+    "image": "../img/intel_logo.png",
+    "limit": 10
+  },
+  {
+    "name": "Eilat",
+    "description": "Live right.",
+    "price": 999999999.00,
+    "image": "../img/eilat_logo.png"
+  },
+  {
+    "name": "Cisco",
+    "description": "Welcome to the Human Network.",
+    "price": 2500.00,
+    "image": "../img/cisco_logo.png"
+  }
+]
