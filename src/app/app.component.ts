@@ -1,4 +1,5 @@
 import {Component, OnInit} from '@angular/core';
+import {BehaviorSubject} from 'rxjs';
 
 interface Product {
   name: string;
@@ -15,7 +16,7 @@ interface Product {
 })
 export class AppComponent implements OnInit {
   title = 'AngularTraining';
-  stock: Product[] = [
+  stock: BehaviorSubject<Product[]> = new BehaviorSubject([
     {
       name: 'Firefox',
       description: 'Your web, the way you like it.',
@@ -55,91 +56,83 @@ export class AppComponent implements OnInit {
       price: 2500.00,
       image: '../img/cisco_logo.png'
     }
-  ];
+  ]);
 
   ngOnInit(): void {
+
     class Cart {
-      private productsInCart: Record<string, number>;
+      productsInCart: BehaviorSubject<Record<string, number>>;
 
       constructor() {
-        this.productsInCart = {};
+        this.productsInCart = new BehaviorSubject<Record<string, number>>({});
+        this.productsInCart.subscribe(console.log);
       }
 
-      private getProductFromStock(productName: string, stock: Product[]): Product {
-        return stock.find(product => product.name === productName);
+      private getProductFromStock(productName: string, stock: BehaviorSubject<Product[]>): Product {
+        return stock.getValue().find(product => product.name === productName);
       }
 
-      addProduct(productName: string, stock: Product[]): void {
+      addProduct(productName: string, stock: BehaviorSubject<Product[]>): void {
         const productFromStock: Product = this.getProductFromStock(productName, stock);
         if (!productFromStock) {
-          console.log('Product ' + productName + ' doesn\'t exist in stock.');
+          console.log(`Product ${productName} doesn't exist in stock.`);
           return;
         }
         if (this.productsInCart[productName]) {
-          console.log('Product ' + productName + ' already exists in your cart.');
+          console.log(`Product ${productName} already exists in your cart.`);
           return;
         }
         if (productFromStock.hasOwnProperty('limit') && productFromStock.limit > 0) {
-          this.productsInCart[productName] = 1;
-          console.log('The new product ' + productName + ' added to your cart successfully.');
+          const cartState = this.productsInCart.getValue();
+          cartState[productName] = 1;
+          console.log(`The new product ${productName} added to your cart successfully.`);
+          this.productsInCart.next(cartState);
         } else {
-          console.log('Product ' + productName + ' is not available is out of stock.');
+          console.log(`Product ${productName} is not available is out of stock.`);
         }
       }
 
       removeProduct(productName: string): void {
-        if (this.productsInCart[productName]) {
-          delete this.productsInCart[productName];
-          console.log('Product ' + productName + ' removed successfully.');
+        const cartState = this.productsInCart.getValue();
+        if (cartState[productName]) {
+          delete cartState[productName];
+          console.log(`Product ${productName} removed successfully.`);
+          this.productsInCart.next(cartState);
         } else {
-          console.log('Product ' + productName + ' doesn\'t exist in your cart.');
+          console.log(`Product ${productName} doesn't exist in your cart.`);
         }
       }
 
-      private updateProductsAmount(stock: Product[]): void {
-        Object.keys(this.productsInCart).forEach((productName: string) => {
-          const product = this.getProductFromStock(productName, stock);
-          if (product.hasOwnProperty('limit') && (product.limit - this.productsInCart[productName] > 0)) {
-            product.limit -= this.productsInCart[productName];
+      private updateProductsAmount(stock: BehaviorSubject<Product[]>): void {
+        Object.keys(this.productsInCart.getValue()).forEach((productName: string) => {
+          const productInStock = this.getProductFromStock(productName, stock);
+          const productAmountInCart = this.productsInCart.getValue()[productName];
+          if (productInStock.hasOwnProperty('limit') && (productInStock.limit - productAmountInCart > 0)) {
+            productInStock.limit -= productAmountInCart;
           }
         });
       }
 
-      checkout(stock: Product[]): void {
+      checkout(stock: BehaviorSubject<Product[]>): void {
         this.updateProductsAmount(stock);
-        console.log('Checked out with a total cost of: ₪' + this.calcTotalPrice(stock));
-        this.productsInCart = {};
+        console.log(`Checked out with a total cost of: ₪${this.calcTotalPrice(stock)}`);
+        this.productsInCart.next({});
       }
 
-      calcTotalPrice(stock: Product[]): number {
-        return Object.keys(this.productsInCart).reduce((acc, productName): number => {
-          return acc + this.productsInCart[productName] * this.getProductFromStock(productName, stock).price;
+      calcTotalPrice(stock: BehaviorSubject<Product[]>): number {
+        return Object.keys(this.productsInCart.getValue()).reduce((acc, productName): number => {
+          return acc + this.productsInCart.getValue()[productName] * this.getProductFromStock(productName, stock).price;
         }, 0);
       }
     }
 
-    console.log(JSON.stringify(this.stock));
     const cart = new Cart();
-    console.log(JSON.stringify(cart));
-    cart.addProduct('Explorer', this.stock);
-    console.log(JSON.stringify(cart));
-    console.log('price: ' + cart.calcTotalPrice(this.stock));
-    cart.addProduct('Firefox', this.stock);
-    console.log(JSON.stringify(cart));
-    console.log('price: ' + cart.calcTotalPrice(this.stock));
-    cart.addProduct('Firefox', this.stock);
-    console.log(JSON.stringify(cart));
+
     cart.addProduct('Ferrari', this.stock);
-    console.log(JSON.stringify(cart));
-    console.log('price: ' + cart.calcTotalPrice(this.stock));
-    cart.removeProduct('Explorer');
-    console.log(JSON.stringify(cart));
-    cart.removeProduct('Firefox');
-    console.log(JSON.stringify(cart));
-    console.log('price: ' + cart.calcTotalPrice(this.stock));
+    cart.addProduct('Intel', this.stock);
+    cart.removeProduct('Ferrari');
+    console.log(cart.calcTotalPrice(this.stock));
     cart.checkout(this.stock);
-    console.log(JSON.stringify(cart));
-    console.log('price: ' + cart.calcTotalPrice(this.stock));
-    console.log(JSON.stringify(this.stock));
+    this.stock.subscribe(console.log);
   }
 }
