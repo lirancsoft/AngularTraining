@@ -1,0 +1,13 @@
+.spaced-card {
+  margin: 3% 2% 0 !important;
+}
+.transparent-background {
+  background-color: transparent !important;
+}
+.product-title:hover {
+  color: #f5742a;
+}
+.card:hover .image {
+  opacity: 65%;
+}
+/*# sourceMappingURL=product-list.component.css.map */

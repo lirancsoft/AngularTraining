@@ -1,0 +1,13 @@
+.primary-background {
+  background-color: #232f3e;
+}
+.secondary-button {
+  background-color: #f4cc67 !important;
+  border: 1px solid #c59f43 !important;
+}
+.nav-button {
+  color: #fff !important;
+  background-color: transparent !important;
+  font-size: medium !important;
+}
+/*# sourceMappingURL=navbar.component.css.map */
